@@ -9,98 +9,79 @@ public class ValidacaoMovimento {
 
     private static final Logger LOG = Logger.getLogger(ValidacaoMovimento.class.getName());
 
-    public static boolean podeMoverSimples(
-            Tabuleiro tabuleiro,
-            int linhaOrigem, int colunaOrigem,
-            int linhaDestino, int colunaDestino,
-            Cor corJogador
-    ) {
-        Peca peca = tabuleiro.getPeca(linhaOrigem, colunaOrigem);
-        if (peca == null) {
-            LOG.fine("podeMoverSimples => Peca inexistente na origem.");
-            return false;
-        }
-        if (peca.getCor() != corJogador) {
-            LOG.fine("podeMoverSimples => Cor da peça não bate com corJogador.");
-            return false;
-        }
+    public static boolean podeMoverSimples(Tabuleiro tabuleiro, int linhaOrigem, int colunaOrigem, int linhaDestino, int colunaDestino, Cor corJogador) {
+        if (!confirmarPecaDoJogador(tabuleiro, linhaOrigem, colunaOrigem, corJogador)) return false;
+        if (!confirmarDestinoVazio(tabuleiro, linhaDestino, colunaDestino)) return false;
 
-        if (tabuleiro.getPeca(linhaDestino, colunaDestino) != null) {
-            LOG.fine("podeMoverSimples => Destino não está vazio.");
-            return false;
-        }
-
-        int deltaLinha = linhaDestino - linhaOrigem;
-        int deltaCol = colunaDestino - colunaOrigem;
-
-        if (!peca.isDama()) {
-            if (peca.getCor() == Cor.AZUL) {
-                if (deltaLinha != +1) {
-                    LOG.fine("podeMoverSimples => Peça Azul, deltaLinha != +1.");
-                    return false;
-                }
-            } else {
-                if (deltaLinha != -1) {
-                    LOG.fine("podeMoverSimples => Peça Vermelha, deltaLinha != -1.");
-                    return false;
-                }
-            }
-            if (Math.abs(deltaCol) != 1) {
-                LOG.fine("podeMoverSimples => deltaCol != 1.");
-                return false;
-            }
-        } else {
-            // Dama => ±1 diagonal
-            if (Math.abs(deltaLinha) != 1 || Math.abs(deltaCol) != 1) {
-                LOG.fine("podeMoverSimples => Dama mas deltaLinha/deltaCol != 1.");
-                return false;
-            }
-        }
-
-        return true;
+        return confirmarMovimentoPermitido(tabuleiro.getPeca(linhaOrigem, colunaOrigem), linhaOrigem, colunaOrigem, linhaDestino, colunaDestino);
     }
 
     public static boolean existeMovimentoSimples(Tabuleiro tabuleiro, Cor cor) {
         for (int linha = 0; linha < Tabuleiro.TAMANHO_TABULEIRO; linha++) {
             for (int coluna = 0; coluna < Tabuleiro.TAMANHO_TABULEIRO; coluna++) {
                 Peca peca = tabuleiro.getPeca(linha, coluna);
-                if (peca != null && peca.getCor() == cor) {
-                    if (podeMoverAlgumaCasa(tabuleiro, linha, coluna, peca)) {
-                        return true;
-                    }
+                if (peca != null && peca.getCor() == cor && podeMoverAlgumaCasa(tabuleiro, linha, coluna, peca)) {
+                    return true;
                 }
             }
         }
         return false;
     }
 
-    private static boolean podeMoverAlgumaCasa(Tabuleiro tabuleiro, int lin, int col, Peca p) {
-        if (!p.isDama()) {
-            int novaLinha = (p.getCor() == Cor.AZUL) ? lin + 1 : lin - 1;
-            for (int dcol = -1; dcol <= 1; dcol += 2) {
-                int novaCol = col + dcol;
-                if (posValida(novaLinha, novaCol)) {
-                    if (tabuleiro.getPeca(novaLinha, novaCol) == null) {
-                        return true;
-                    }
-                }
-            }
-        } else {
-            int[][] dir = { {1,1},{1,-1},{-1,1},{-1,-1} };
-            for (int[] d : dir) {
-                int nl = lin + d[0];
-                int nc = col + d[1];
-                if (posValida(nl, nc)) {
-                    if (tabuleiro.getPeca(nl, nc) == null) {
-                        return true;
-                    }
-                }
+    private static boolean podeMoverAlgumaCasa(Tabuleiro tabuleiro, int linha, int coluna, Peca peca) {
+        for (int[] direcao : getDirecoesMovimento(peca)) {
+            int novaLinha = linha + direcao[0];
+            int novaColuna = coluna + direcao[1];
+            if (confirmarPosicaoValida(novaLinha, novaColuna) && confirmarDestinoVazio(tabuleiro, novaLinha, novaColuna)) {
+                return true;
             }
         }
         return false;
     }
 
-    private static boolean posValida(int l, int c) {
-        return (l >= 0 && l < Tabuleiro.TAMANHO_TABULEIRO && c >= 0 && c < Tabuleiro.TAMANHO_TABULEIRO);
+    private static boolean confirmarPecaDoJogador(Tabuleiro tabuleiro, int linha, int coluna, Cor corJogador) {
+        Peca peca = tabuleiro.getPeca(linha, coluna);
+        if (peca == null || peca.getCor() != corJogador) {
+            LOG.fine("A peça não pertence ao jogador.");
+            return false;
+        }
+        return true;
+    }
+
+    private static boolean confirmarDestinoVazio(Tabuleiro tabuleiro, int linhaDestino, int colunaDestino) {
+        if (tabuleiro.getPeca(linhaDestino, colunaDestino) != null) {
+            LOG.fine("Destino não está vazio.");
+            return false;
+        }
+        return true;
+    }
+
+    private static boolean confirmarMovimentoPermitido(Peca peca, int linhaOrigem, int colunaOrigem, int linhaDestino, int colunaDestino) {
+        int deltaLinha = linhaDestino - linhaOrigem;
+        int deltaColuna = colunaDestino - colunaOrigem;
+
+        if (peca.isDama()) {
+            return Math.abs(deltaLinha) == 1 && Math.abs(deltaColuna) == 1;
+        }
+
+        int direcaoPermitida = (peca.getCor() == Cor.AZUL) ? 1 : -1;
+        if (deltaLinha == direcaoPermitida && Math.abs(deltaColuna) == 1) {
+            return true;
+        }
+
+        LOG.fine("Movimento não permitido para a peça.");
+        return false;
+    }
+
+    private static boolean confirmarPosicaoValida(int linha, int coluna) {
+        return linha >= 0 && linha < Tabuleiro.TAMANHO_TABULEIRO && coluna >= 0 && coluna < Tabuleiro.TAMANHO_TABULEIRO;
+    }
+
+    private static int[][] getDirecoesMovimento(Peca peca) {
+        if (peca.isDama()) {
+            return new int[][]{{1, 1}, {1, -1}, {-1, 1}, {-1, -1}};
+        }
+        int direcao = (peca.getCor() == Cor.AZUL) ? 1 : -1;
+        return new int[][]{{direcao, 1}, {direcao, -1}};
     }
 }

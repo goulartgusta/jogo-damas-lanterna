@@ -1,7 +1,6 @@
 package br.com.almaviva.dama.service;
 
 import java.util.logging.Logger;
-
 import br.com.almaviva.dama.model.Cor;
 import br.com.almaviva.dama.model.Jogador;
 import br.com.almaviva.dama.model.Peca;
@@ -11,132 +10,165 @@ import br.com.almaviva.dama.view.JogoView;
 
 public class JogoService {
 
-	private static final Logger LOG = Logger.getLogger(JogoService.class.getName());
+    private static final Logger LOG = Logger.getLogger(JogoService.class.getName());
 
-	private JogoView view;
-	private Tabuleiro tabuleiro;
-	private Jogador jogador1;
-	private Jogador jogador2;
-	private Jogador jogadorAtual;
-	private MovimentoService movimentoService;
-	private CapturaService capturaService;
-	private ValidacaoJogo validacaoJogo;
+    private final JogoView view;
+    private final Tabuleiro tabuleiro;
+    private final Jogador jogador1;
+    private final Jogador jogador2;
+    private Jogador jogadorAtual;
+    private final MovimentoService movimentoService;
+    private final CapturaService capturaService;
+    private final ValidacaoJogo validacaoJogo;
 
-	public JogoService(JogoView view, Jogador jogador1, Jogador jogdor2) {
-		LOG.info("Criando JogoService...");
-		this.view = view;
-		this.jogador1 = jogador1;
-		this.jogador2 = jogdor2;
-		this.jogadorAtual = jogador1;
-		this.tabuleiro = new Tabuleiro();
+    public JogoService(JogoView view, Jogador jogador1, Jogador jogador2) {
+        LOG.info("Criando JogoService...");
+        this.view = view;
+        this.jogador1 = jogador1;
+        this.jogador2 = jogador2;
+        this.jogadorAtual = jogador1;
+        this.tabuleiro = new Tabuleiro();
 
-		this.movimentoService = new MovimentoService(tabuleiro);
-		this.capturaService = new CapturaService(tabuleiro);
+        this.movimentoService = new MovimentoService(tabuleiro);
+        this.capturaService = new CapturaService(tabuleiro);
+        this.validacaoJogo = new ValidacaoJogo(tabuleiro, movimentoService, capturaService);
 
-		this.validacaoJogo = new ValidacaoJogo(tabuleiro, movimentoService, capturaService);
-		LOG.info("JogoService criado com sucesso.");
-	}
+        LOG.info("Jogo criado com sucesso.");
+    }
 
-	public void iniciarJogo() {
-		LOG.info("Iniciando loop de jogo...");
-		boolean fim = false;
+    public void iniciarJogo() {
+        LOG.info("Iniciando jogo...");
+        while (!verificarFimDeJogo()) {
+            if (executarTurno()) {
+                LOG.info("Jogador " + jogadorAtual.getNome() + " desistiu. Encerrando o jogo.");
+                break;
+            }
+            alternarJogador();
+        }
+        encerrarJogo();
+    }
 
-		while (!fim) {
-			if (validacaoJogo.semPecas(jogadorAtual)) {
-				Jogador vencedor = (jogadorAtual == jogador1) ? jogador2 : jogador1;
-				view.exibirMensagemCentralizada(
-					"Parabéns, " + vencedor.getNome() + "! Você venceu (oponente sem peças).");
-				LOG.info("Encerrando jogo: " + jogadorAtual.getNome() + " ficou sem peças.");
-				break;
-			}
+    private boolean verificarFimDeJogo() {
+        if (validacaoJogo.jogadorSemPecas(jogadorAtual)) {
+            exibirMensagemVitoria();
+            return true;
+        }
+        if (!validacaoJogo.podeJogar(jogadorAtual)) {
+            exibirMensagemSemMovimentos();
+            return true;
+        }
+        if (validacaoJogo.atingiuEmpatePorFaltaDeCaptura()) {
+            exibirMensagemEmpate();
+            return true;
+        }
+        return false;
+    }
 
-			if (!validacaoJogo.podeJogar(jogadorAtual)) {
-				view.exibirMensagemCentralizada(
-					"O jogador " + jogadorAtual.getNome() + " não pode mover.\nFim de jogo!");
-				LOG.info("Encerrando jogo: " + jogadorAtual.getNome() + " não pode jogar.");
-				break;
-			}
+    private void exibirMensagemVitoria() {
+        Jogador vencedor = (jogadorAtual == jogador1) ? jogador2 : jogador1;
+        view.exibirMensagemCentralizada("Parabéns, " + vencedor.getNome() + "! Você venceu.");
+        LOG.info("Fim de jogo: " + vencedor.getNome() + " venceu.");
+    }
 
-			if (validacaoJogo.atingiuEmpatePorFaltaDeCaptura()) {
-				view.exibirMensagemCentralizada("Empate! 20 jogadas sem captura.");
-				LOG.info("Empate por 20 jogadas sem captura.");
-				break;
-			}
+    private void exibirMensagemSemMovimentos() {
+        view.exibirMensagemCentralizada("O jogador " + jogadorAtual.getNome() + " não pode mover. Fim de jogo!");
+        LOG.info("Fim de jogo: " + jogadorAtual.getNome() + " não pode jogar.");
+    }
 
-			boolean desistiu = executarTurno(jogadorAtual);
-			if (desistiu) {
-				LOG.info("Jogador " + jogadorAtual.getNome() + " desistiu (ESC). Encerrando jogo.");
-				fim = true;
-			} else {
-				jogadorAtual = (jogadorAtual == jogador1) ? jogador2 : jogador1;
-			}
-		}
+    private void exibirMensagemEmpate() {
+        view.exibirMensagemCentralizada("Empate! 20 jogadas sem captura.");
+        LOG.info("Fim de jogo: empate por 20 jogadas sem captura.");
+    }
 
-		view.exibirMensagemCentralizada("Jogo encerrado! (Pressione uma tecla)");
-		view.finalizar();
-		LOG.info("Loop de jogo finalizado.");
-	}
+    private void alternarJogador() {
+        jogadorAtual = (jogadorAtual == jogador1) ? jogador2 : jogador1;
+    }
 
-	private boolean executarTurno(Jogador jogo) {
-		LOG.info("Executando turno de " + jogo.getNome() + " (" + jogo.getCor() + ")...");
-		Cor cor = jogo.getCor();
-		String msg = "Vez de " + jogo.getNome() + " (" + cor + ")";
-		boolean temCaptura = capturaService.existeCaptura(cor);
+    private void encerrarJogo() {
+        view.exibirMensagemCentralizada("Jogo encerrado! (Pressione uma tecla)");
+        view.finalizar();
+        LOG.info("Jogo finalizado.");
+    }
 
-		while (true) {
-			int[] origem = view.selecionarPosicao(tabuleiro, msg + (temCaptura ? "\n(Captura Obrigatória!)" : ""));
-			if (origem == null) {
-				LOG.info("Jogador " + jogo.getNome() + " apertou ESC na seleção de origem.");
-				return true; // ESC => desistiu
-			}
+    private boolean executarTurno() {
+        LOG.info("Turno de " + jogadorAtual.getNome() + " (" + jogadorAtual.getCor() + ")");
+        Cor cor = jogadorAtual.getCor();
+        String mensagem = "Vez de " + jogadorAtual.getNome() + " (" + cor + ")";
+        boolean temCaptura = capturaService.existeCaptura(cor);
 
-			Peca peca = tabuleiro.getPeca(origem[0], origem[1]);
-			if (peca == null) {
-				view.exibirMensagemCentralizada("Não há peça nessa posição.");
-				LOG.fine("Jogador selecionou casa vazia. Pedindo nova seleção.");
-				continue;
-			}
-			if (peca.getCor() != cor) {
-				view.exibirMensagemCentralizada("Essa peça não é sua!");
-				LOG.fine("Jogador selecionou peça de outra cor. Pedindo nova seleção.");
-				continue;
-			}
+        int[] origem = selecionarOrigem(cor, mensagem, temCaptura);
+        if (origem == null) {
+            return true; 
+        }
 
-			if (temCaptura && !capturaService.podeCapturar(origem[0], origem[1], cor)) {
-				view.exibirMensagemCentralizada("Captura obrigatória! Escolha peça que possa capturar.");
-				LOG.fine("Peça selecionada não pode capturar. Pedindo nova seleção.");
-				continue;
-			}
+        int[] destino = selecionarDestino();
+        if (destino == null) {
+            return false;
+        }
 
-			int[] destino = view.selecionarPosicao(tabuleiro, "Selecione o destino");
-			if (destino == null) {
-				LOG.info("Jogador " + jogo.getNome() + " apertou ESC na seleção de destino.");
-				continue; 
-			}
+        return processarMovimentoOuCaptura(origem, destino, temCaptura, cor);
+    }
 
-			if (temCaptura) {
-				LOG.info("Tentando captura...");
-				boolean capturou = capturaService.capturar(origem, destino, cor);
-				if (!capturou) {
-					view.exibirMensagemCentralizada("Captura inválida!");
-					LOG.warning("Captura retornou falso. Pedindo nova jogada.");
-					continue;
-				}
-				validacaoJogo.resetarContagemSemCaptura();
+    private int[] selecionarOrigem(Cor cor, String mensagem, boolean temCaptura) {
+        String mensagemCompleta = mensagem + (temCaptura ? "\n(Captura obrigatória!)" : "");
+        int[] origem;
 
-				capturaService.capturarmaisDeUm(destino, cor);
-				return false; 
-			} else {
-				LOG.info("Tentando movimento simples...");
-				boolean moveu = movimentoService.executarMovimento(origem, destino, cor);
-				if (!moveu) {
-					view.exibirMensagemCentralizada("Movimento inválido!");
-					LOG.warning("Movimento retornou falso. Pedindo nova jogada.");
-					continue;
-				}
-				validacaoJogo.incrementarContagemSemCaptura();
-				return false;
-			}
-		}
-	}
+        do {
+            origem = view.selecionarPosicao(tabuleiro, mensagemCompleta);
+            if (origem == null) {
+                LOG.info("Jogador " + jogadorAtual.getNome() + " apertou ESC na seleção de origem.");
+                return null;
+            }
+        } while (!validarSelecaoDeOrigem(origem, cor));
+
+        return origem;
+    }
+
+    private int[] selecionarDestino() {
+        return view.selecionarPosicao(tabuleiro, "Selecione o destino");
+    }
+
+    private boolean validarSelecaoDeOrigem(int[] origem, Cor cor) {
+        Peca peca = tabuleiro.getPeca(origem[0], origem[1]);
+        if (peca == null) {
+            view.exibirMensagemCentralizada("Não há peça nessa posição.");
+            return false;
+        }
+        if (peca.getCor() != cor) {
+            view.exibirMensagemCentralizada("Essa peça não é sua!");
+            return false;
+        }
+        if (capturaService.existeCaptura(cor) && !capturaService.podeCapturar(origem[0], origem[1], cor)) {
+            view.exibirMensagemCentralizada("Captura obrigatória! Escolha uma peça que possa capturar.");
+            return false;
+        }
+        return true;
+    }
+
+    private boolean processarMovimentoOuCaptura(int[] origem, int[] destino, boolean temCaptura, Cor cor) {
+        if (temCaptura) {
+            return processarCaptura(origem, destino, cor);
+        } else {
+            return processarMovimento(origem, destino, cor);
+        }
+    }
+
+    private boolean processarCaptura(int[] origem, int[] destino, Cor cor) {
+        if (!capturaService.capturar(origem, destino, cor)) {
+            view.exibirMensagemCentralizada("Captura inválida!");
+            return false;
+        }
+        validacaoJogo.resetarContagemSemCaptura();
+        capturaService.capturarmaisDeUm(destino, cor);
+        return true;
+    }
+
+    private boolean processarMovimento(int[] origem, int[] destino, Cor cor) {
+        if (!movimentoService.executarMovimento(origem, destino, cor)) {
+            view.exibirMensagemCentralizada("Movimento inválido!");
+            return false;
+        }
+        validacaoJogo.incrementarContagemSemCaptura();
+        return true;
+    }
 }

@@ -32,40 +32,26 @@ public class ValidacaoJogo {
 
     public void incrementarContagemSemCaptura() {
         this.jogadasSemCaptura++;
-        LOG.fine("Incrementando jogadas sem captura. Valor atual: " + jogadasSemCaptura);
     }
 
     public boolean atingiuEmpatePorFaltaDeCaptura() {
-        boolean res = (jogadasSemCaptura >= LIMITE_SEM_CAPTURA);
-        if (res) {
-            LOG.info("Atingiu limite de " + LIMITE_SEM_CAPTURA + " jogadas sem captura => Empate.");
-        }
-        return res;
+        return jogadasSemCaptura >= LIMITE_SEM_CAPTURA;
     }
 
     public boolean podeJogar(Jogador jogador) {
         Cor cor = jogador.getCor();
         int numPecas = tabuleiro.contarPecas(cor);
         if (numPecas == 0) {
-            LOG.fine("Jogador " + jogador.getNome() + " (" + cor + ") não tem peças.");
             return false;
         }
-        // Se existe captura => tem jogada
         if (capturaService.existeCaptura(cor)) {
-            LOG.fine("Jogador " + jogador.getNome() + " (" + cor + ") tem captura.");
             return true;
         }
-        // Senão, vê se há movimento simples
-        boolean movSimples = movimentoService.existeMovimentoSimples(cor);
-        LOG.fine("Jogador " + jogador.getNome() + " (" + cor + ") => existeMovimentoSimples? " + movSimples);
-        return movSimples;
+        
+        return movimentoService.existeMovimentoSimples(cor);
     }
 
-    public boolean semPecas(Jogador jogador) {
-        boolean sem = (tabuleiro.contarPecas(jogador.getCor()) == 0);
-        if (sem) {
-            LOG.info("Jogador " + jogador.getNome() + " não tem mais peças!");
-        }
-        return sem;
+    public boolean jogadorSemPecas(Jogador jogador) {
+        return tabuleiro.contarPecas(jogador.getCor()) == 0;
     }
 }
