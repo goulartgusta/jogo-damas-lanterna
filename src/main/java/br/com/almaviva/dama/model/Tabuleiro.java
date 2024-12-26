@@ -33,7 +33,7 @@ public class Tabuleiro {
 
     public Peca getPeca(int linha, int coluna) {
         if (linha < 0 || linha >= TAMANHO_TABULEIRO || coluna < 0 || coluna >= TAMANHO_TABULEIRO) {
-            LOG.fine("getPeca fora dos limites: (" + linha + "," + coluna + ")");
+            LOG.fine("Peca fora dos limites: (" + linha + "," + coluna + ")");
             return null;
         }
         return casas[linha][coluna];
@@ -41,7 +41,7 @@ public class Tabuleiro {
 
     public void setPeca(int linha, int coluna, Peca peca) {
         if (linha < 0 || linha >= TAMANHO_TABULEIRO || coluna < 0 || coluna >= TAMANHO_TABULEIRO) {
-            LOG.warning("setPeca fora dos limites: (" + linha + "," + coluna + ")");
+            LOG.warning("Peca fora dos limites: (" + linha + "," + coluna + ")");
             return;
         }
         casas[linha][coluna] = peca;
@@ -60,7 +60,7 @@ public class Tabuleiro {
                 }
             }
         }
-        LOG.fine("contarPecas para " + cor + " => " + contador);
+        LOG.fine("Contar pecas para " + cor + " => " + contador);
         return contador;
     }
 }

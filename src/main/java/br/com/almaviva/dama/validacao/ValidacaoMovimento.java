@@ -11,30 +11,30 @@ public class ValidacaoMovimento {
 
     public static boolean podeMoverSimples(
             Tabuleiro tabuleiro,
-            int linOrigem, int colOrigem,
-            int linDestino, int colDestino,
+            int linhaOrigem, int colunaOrigem,
+            int linhaDestino, int colunaDestino,
             Cor corJogador
     ) {
-        Peca p = tabuleiro.getPeca(linOrigem, colOrigem);
-        if (p == null) {
+        Peca peca = tabuleiro.getPeca(linhaOrigem, colunaOrigem);
+        if (peca == null) {
             LOG.fine("podeMoverSimples => Peca inexistente na origem.");
             return false;
         }
-        if (p.getCor() != corJogador) {
+        if (peca.getCor() != corJogador) {
             LOG.fine("podeMoverSimples => Cor da peça não bate com corJogador.");
             return false;
         }
 
-        if (tabuleiro.getPeca(linDestino, colDestino) != null) {
+        if (tabuleiro.getPeca(linhaDestino, colunaDestino) != null) {
             LOG.fine("podeMoverSimples => Destino não está vazio.");
             return false;
         }
 
-        int deltaLinha = linDestino - linOrigem;
-        int deltaCol = colDestino - colOrigem;
+        int deltaLinha = linhaDestino - linhaOrigem;
+        int deltaCol = colunaDestino - colunaOrigem;
 
-        if (!p.isDama()) {
-            if (p.getCor() == Cor.AZUL) {
+        if (!peca.isDama()) {
+            if (peca.getCor() == Cor.AZUL) {
                 if (deltaLinha != +1) {
                     LOG.fine("podeMoverSimples => Peça Azul, deltaLinha != +1.");
                     return false;
@@ -61,11 +61,11 @@ public class ValidacaoMovimento {
     }
 
     public static boolean existeMovimentoSimples(Tabuleiro tabuleiro, Cor cor) {
-        for (int lin = 0; lin < Tabuleiro.TAMANHO_TABULEIRO; lin++) {
-            for (int col = 0; col < Tabuleiro.TAMANHO_TABULEIRO; col++) {
-                Peca p = tabuleiro.getPeca(lin, col);
-                if (p != null && p.getCor() == cor) {
-                    if (podeMoverAlgumaCasa(tabuleiro, lin, col, p)) {
+        for (int linha = 0; linha < Tabuleiro.TAMANHO_TABULEIRO; linha++) {
+            for (int coluna = 0; coluna < Tabuleiro.TAMANHO_TABULEIRO; coluna++) {
+                Peca peca = tabuleiro.getPeca(linha, coluna);
+                if (peca != null && peca.getCor() == cor) {
+                    if (podeMoverAlgumaCasa(tabuleiro, linha, coluna, peca)) {
                         return true;
                     }
                 }

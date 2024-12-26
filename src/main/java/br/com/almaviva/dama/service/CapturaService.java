@@ -71,10 +71,10 @@ public class CapturaService {
 		return existe;
 	}
 
-	public boolean podeCapturar(int lin, int col, Cor corJogador) {
-		List<int[]> caps = ValidacaoCaptura.getCapturasPossiveisDaPeca(tabuleiro, lin, col, corJogador);
+	public boolean podeCapturar(int linha, int coluna, Cor corJogador) {
+		List<int[]> caps = ValidacaoCaptura.getCapturasPossiveisDaPeca(tabuleiro, linha, coluna, corJogador);
 		boolean can = !caps.isEmpty();
-		LOG.fine("podeCapturar(" + lin + "," + col + ", " + corJogador + ") => " + can);
+		LOG.fine("podeCapturar(" + linha + "," + coluna + ", " + corJogador + ") => " + can);
 		return can;
 	}
 

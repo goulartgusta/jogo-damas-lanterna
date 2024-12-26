@@ -15,14 +15,14 @@ import br.com.almaviva.dama.model.Cor;
 import br.com.almaviva.dama.model.Peca;
 import br.com.almaviva.dama.model.Tabuleiro;
 
-public class LanternaUI {
+public class JogoView{
 
-    private static final Logger LOG = Logger.getLogger(LanternaUI.class.getName());
+    private static final Logger LOG = Logger.getLogger(JogoView.class.getName());
 
     private Screen screen;
     private TextGraphics graphics;
 
-    public LanternaUI() {
+    public JogoView() {
         try {
             DefaultTerminalFactory factory = new DefaultTerminalFactory();
             this.screen = factory.createScreen();

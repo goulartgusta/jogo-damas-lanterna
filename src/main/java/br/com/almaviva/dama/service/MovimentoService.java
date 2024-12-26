@@ -18,19 +18,19 @@ public class MovimentoService {
     public boolean executarMovimento(int[] origem, int[] destino, Cor corJogador) {
         LOG.info("Tentando movimento simples de (" + origem[0] + "," + origem[1] + ") para ("
                  + destino[0] + "," + destino[1] + "), cor=" + corJogador);
-        int linO = origem[0], colO = origem[1];
-        int linD = destino[0], colD = destino[1];
+        int linhaOrigem = origem[0], colunaOrigem = origem[1];
+        int linhaDestino = destino[0], colunaDestino = destino[1];
 
-        if (!ValidacaoMovimento.podeMoverSimples(tabuleiro, linO, colO, linD, colD, corJogador)) {
+        if (!ValidacaoMovimento.podeMoverSimples(tabuleiro, linhaOrigem, colunaOrigem, linhaDestino, colunaDestino, corJogador)) {
             LOG.warning("Movimento inválido segundo ValidacaoMovimento.");
             return false;
         }
 
-        Peca p = tabuleiro.getPeca(linO, colO);
-        tabuleiro.setPeca(linO, colO, null);
-        tabuleiro.setPeca(linD, colD, p);
+        Peca peca = tabuleiro.getPeca(linhaOrigem, colunaOrigem);
+        tabuleiro.setPeca(linhaOrigem, colunaOrigem, null);
+        tabuleiro.setPeca(linhaDestino, colunaDestino, peca);
 
-        promoverSeNecessario(p, linD);
+        promoverSeNecessario(peca, linhaDestino);
         LOG.info("Movimento simples realizado com sucesso!");
         return true;
     }
