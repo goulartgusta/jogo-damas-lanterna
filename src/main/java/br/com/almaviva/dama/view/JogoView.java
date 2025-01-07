@@ -111,7 +111,7 @@ public class JogoView {
                         linha == cursorLinha && coluna == cursorColuna ? TextColor.ANSI.YELLOW :
                         peca.getCor() == Cor.AZUL ? TextColor.ANSI.BLUE : TextColor.ANSI.RED
                     );
-                    char simbolo = peca.isDama() ? 'O' : 'o';
+                    char simbolo = peca.ehDama() ? 'O' : 'o';
                     graphics.putString(x, y, simbolo + " ");
                 }
             }

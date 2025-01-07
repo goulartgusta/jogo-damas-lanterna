@@ -60,7 +60,7 @@ public class ValidacaoMovimento {
         int deltaLinha = linhaDestino - linhaOrigem;
         int deltaColuna = colunaDestino - colunaOrigem;
 
-        if (peca.isDama()) {
+        if (peca.ehDama()) {
             return Math.abs(deltaLinha) == 1 && Math.abs(deltaColuna) == 1;
         }
 
@@ -78,7 +78,7 @@ public class ValidacaoMovimento {
     }
 
     private static int[][] getDirecoesMovimento(Peca peca) {
-        if (peca.isDama()) {
+        if (peca.ehDama()) {
             return new int[][]{{1, 1}, {1, -1}, {-1, 1}, {-1, -1}};
         }
         int direcao = (peca.getCor() == Cor.AZUL) ? 1 : -1;

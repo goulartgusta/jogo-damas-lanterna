@@ -18,14 +18,13 @@ public class Main {
 
         boolean continuar = true;
         while (continuar) {
-            int opcao = viewMenu.exibirMenuPrincipal();
-            LOG.info("Opção selecionada no menu principal: " + opcao);
-            switch (opcao) {
+        	int opcao = viewMenu.exibirMenuPrincipal();
+        	switch (opcao) {
                 case 1:
                     LOG.info("Escolhendo cor para Jogador 1");
                     String corEscolhida = viewMenu.exibirMenuCorJogador1();
                     if (corEscolhida == null) {
-                        LOG.warning("Jogador apertou ESC no menu de cor. Voltando ao menu principal.");
+                        LOG.warning("Jogador apertou ESC. Voltando ao menu principal.");
                         break;
                     }
                     Cor corJog1 = corEscolhida.equalsIgnoreCase("Azul") ? Cor.AZUL : Cor.VERMELHO;
@@ -41,13 +40,7 @@ public class Main {
                     break;
 
                 case 2: 
-                    LOG.info("Exibindo Manual simplificado");
-                    viewJogo.exibirMensagemCentralizada(
-                            "Manual (Simplificado)\n\n"
-                                    + "- As peças se movem em diagonal\n"
-                                    + "- Captura (se existir) é obrigatória\n"
-                                    + "- ESC a qualquer momento para voltar"
-                    );
+                    exibirManual(viewJogo);
                     break;
 
                 case 3:
@@ -60,5 +53,26 @@ public class Main {
 
         viewJogo.finalizar();
         LOG.info("Aplicação Damas finalizada.");
+    }
+
+    private static void exibirManual(JogoView viewJogo) {
+        String[] manual = {
+            "Manual",
+            "- As peças se movem somente em diagonal",
+            "- Sempre que existir uma possibilidade de captura de uma ou mais uma peças, deve ser obrigatória",
+            "- Para virar dama, deve chegar a outra extremidade do campo",
+            "- Aperte 'ESC' a qualquer momento para voltar"
+        };
+
+        viewJogo.limparTela();
+
+        int linhaAtual = 5; 
+        for (String linha : manual) {
+            viewJogo.desenharTextoCentralizado(linha, linhaAtual);
+            linhaAtual += 2; 
+        }
+
+        viewJogo.refresh();
+        viewJogo.esperarTecla(); 
     }
 }

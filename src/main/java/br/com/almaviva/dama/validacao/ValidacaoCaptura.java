@@ -72,7 +72,7 @@ public class ValidacaoCaptura {
         int deltaLinha = linhaDestino - linhaOrigem;
         int deltaColuna = colunaDestino - colunaOrigem;
 
-        if (peca.isDama()) {
+        if (peca.ehDama()) {
             if (Math.abs(deltaLinha) != 2 || Math.abs(deltaColuna) != 2) {
                 LOG.fine("Movimento de captura inválido para Dama.");
                 return false;

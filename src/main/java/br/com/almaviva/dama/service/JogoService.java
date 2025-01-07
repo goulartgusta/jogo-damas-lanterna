@@ -1,6 +1,7 @@
 package br.com.almaviva.dama.service;
 
 import java.util.logging.Logger;
+
 import br.com.almaviva.dama.model.Cor;
 import br.com.almaviva.dama.model.Jogador;
 import br.com.almaviva.dama.model.Peca;
@@ -28,19 +29,21 @@ public class JogoService {
         this.jogador2 = jogador2;
         this.jogadorAtual = jogador1;
         this.tabuleiro = new Tabuleiro();
-
         this.movimentoService = new MovimentoService(tabuleiro);
         this.capturaService = new CapturaService(tabuleiro);
         this.validacaoJogo = new ValidacaoJogo(tabuleiro, movimentoService, capturaService);
-
-        LOG.info("Jogo criado com sucesso.");
     }
 
     public void iniciarJogo() {
-        LOG.info("Iniciando jogo...");
-        while (!verificarFimDeJogo()) {
-            if (executarTurno()) {
-                LOG.info("Jogador " + jogadorAtual.getNome() + " desistiu. Encerrando o jogo.");
+    	boolean jogando = true;
+        while (jogando) {
+            if (verificarFimDeJogo()) {
+                exibirResultado();
+                break;
+            }
+            if (!executarTurno()) {
+                LOG.info("Jogador desistiu. Encerrando o jogo.");
+                jogando = false;
                 break;
             }
             alternarJogador();
@@ -50,18 +53,22 @@ public class JogoService {
 
     private boolean verificarFimDeJogo() {
         if (validacaoJogo.jogadorSemPecas(jogadorAtual)) {
-            exibirMensagemVitoria();
             return true;
         }
         if (!validacaoJogo.podeJogar(jogadorAtual)) {
+            return true;
+        }
+        return validacaoJogo.atingiuEmpatePorFaltaDeCaptura();
+    }
+
+    private void exibirResultado() {
+        if (validacaoJogo.jogadorSemPecas(jogadorAtual)) {
+            exibirMensagemVitoria();
+        } else if (!validacaoJogo.podeJogar(jogadorAtual)) {
             exibirMensagemSemMovimentos();
-            return true;
-        }
-        if (validacaoJogo.atingiuEmpatePorFaltaDeCaptura()) {
+        } else if (validacaoJogo.atingiuEmpatePorFaltaDeCaptura()) {
             exibirMensagemEmpate();
-            return true;
         }
-        return false;
     }
 
     private void exibirMensagemVitoria() {
@@ -80,55 +87,43 @@ public class JogoService {
         LOG.info("Fim de jogo: empate por 20 jogadas sem captura.");
     }
 
-    private void alternarJogador() {
-        jogadorAtual = (jogadorAtual == jogador1) ? jogador2 : jogador1;
-    }
-
-    private void encerrarJogo() {
-        view.exibirMensagemCentralizada("Jogo encerrado! (Pressione uma tecla)");
-        view.finalizar();
-        LOG.info("Jogo finalizado.");
-    }
-
     private boolean executarTurno() {
         LOG.info("Turno de " + jogadorAtual.getNome() + " (" + jogadorAtual.getCor() + ")");
         Cor cor = jogadorAtual.getCor();
-        String mensagem = "Vez de " + jogadorAtual.getNome() + " (" + cor + ")";
         boolean temCaptura = capturaService.existeCaptura(cor);
 
-        int[] origem = selecionarOrigem(cor, mensagem, temCaptura);
+        int[] origem = selecionarOrigem(cor, temCaptura);
         if (origem == null) {
-            return true; 
+            return false; 
         }
 
         int[] destino = selecionarDestino();
         if (destino == null) {
-            return false;
+            return false; 
         }
 
         return processarMovimentoOuCaptura(origem, destino, temCaptura, cor);
     }
 
-    private int[] selecionarOrigem(Cor cor, String mensagem, boolean temCaptura) {
-        String mensagemCompleta = mensagem + (temCaptura ? "\n(Captura obrigatória!)" : "");
-        int[] origem;
-
-        do {
-            origem = view.selecionarPosicao(tabuleiro, mensagemCompleta);
+    private int[] selecionarOrigem(Cor cor, boolean temCaptura) {
+        String mensagem = "Vez de " + jogadorAtual.getNome() + " (" + cor + ")" + (temCaptura ? "\n(Captura obrigatória!)" : "");
+        while (true) {
+            int[] origem = view.selecionarPosicao(tabuleiro, mensagem);
             if (origem == null) {
-                LOG.info("Jogador " + jogadorAtual.getNome() + " apertou ESC na seleção de origem.");
+                LOG.info("Jogador desistiu durante a seleção de origem.");
                 return null;
             }
-        } while (!validarSelecaoDeOrigem(origem, cor));
-
-        return origem;
+            if (validarSelecaoDeOrigem(origem, cor, temCaptura)) {
+                return origem;
+            }
+        }
     }
 
     private int[] selecionarDestino() {
         return view.selecionarPosicao(tabuleiro, "Selecione o destino");
     }
 
-    private boolean validarSelecaoDeOrigem(int[] origem, Cor cor) {
+    private boolean validarSelecaoDeOrigem(int[] origem, Cor cor, boolean temCaptura) {
         Peca peca = tabuleiro.getPeca(origem[0], origem[1]);
         if (peca == null) {
             view.exibirMensagemCentralizada("Não há peça nessa posição.");
@@ -138,7 +133,7 @@ public class JogoService {
             view.exibirMensagemCentralizada("Essa peça não é sua!");
             return false;
         }
-        if (capturaService.existeCaptura(cor) && !capturaService.podeCapturar(origem[0], origem[1], cor)) {
+        if (temCaptura && !capturaService.podeCapturar(origem[0], origem[1], cor)) {
             view.exibirMensagemCentralizada("Captura obrigatória! Escolha uma peça que possa capturar.");
             return false;
         }
@@ -170,5 +165,15 @@ public class JogoService {
         }
         validacaoJogo.incrementarContagemSemCaptura();
         return true;
+    }
+
+    private void alternarJogador() {
+        jogadorAtual = (jogadorAtual == jogador1) ? jogador2 : jogador1;
+    }
+
+    private void encerrarJogo() {
+        view.exibirMensagemCentralizada("Jogo encerrado! Pressione uma tecla para sair.");
+        view.finalizar();
+        LOG.info("Jogo encerrado.");
     }
 }

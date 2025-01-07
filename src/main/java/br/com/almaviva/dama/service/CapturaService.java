@@ -31,7 +31,7 @@ public class CapturaService {
         executarCaptura(linhaPeca, colunaPeca, linhaDestino, colunaDestino);
 
         Peca peca = tabuleiro.getPeca(linhaDestino, colunaDestino);
-        promoverSeNecessario(peca, linhaDestino);
+        verificarPromocaoDama(peca, linhaDestino);
         LOG.info("Captura realizada com sucesso!");
         return true;
     }
@@ -46,6 +46,7 @@ public class CapturaService {
                 LOG.fine("Nenhuma captura adicional encontrada.");
                 capturou = false;
             } else {
+            	
                 int[] destinoEscolhido = destinos.get(0);
                 capturou = capturar(posicaoAtual, destinoEscolhido, corJogador);
                 if (capturou) {
@@ -71,15 +72,15 @@ public class CapturaService {
         Peca peca = tabuleiro.getPeca(linhaPeca, colunaPeca);
         tabuleiro.setPeca(linhaPeca, colunaPeca, null);
 
-        int meioLin = (linhaPeca + linhaDestino) / 2;
-        int meioCol = (colunaPeca + colunaDestino) / 2;
-        tabuleiro.setPeca(meioLin, meioCol, null);
+        int linhaPrimeiraCaptura = (linhaPeca + linhaDestino) / 2;
+        int colunaPrimeiraCaptura = (colunaPeca + colunaDestino) / 2;
+        tabuleiro.setPeca(linhaPrimeiraCaptura, colunaPrimeiraCaptura, null);
 
         tabuleiro.setPeca(linhaDestino, colunaDestino, peca);
     }
 
-    private void promoverSeNecessario(Peca peca, int linhaDestino) {
-        if (peca.isDama()) {
+    private void verificarPromocaoDama(Peca peca, int linhaDestino) {
+        if (peca.ehDama()) {
             return;
         }
         if (peca.getCor() == Cor.AZUL && linhaDestino == Tabuleiro.TAMANHO_TABULEIRO - 1) {

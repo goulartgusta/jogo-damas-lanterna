@@ -17,7 +17,7 @@ public class Peca {
         return cor;
     }
 
-    public boolean isDama() {
+    public boolean ehDama() {
         return dama;
     }
 

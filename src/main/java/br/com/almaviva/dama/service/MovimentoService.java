@@ -16,8 +16,10 @@ public class MovimentoService {
 	}
 
 	public boolean executarMovimento(int[] origem, int[] destino, Cor corJogador) {
-		int linhaOrigem = origem[0], colunaOrigem = origem[1];
-		int linhaDestino = destino[0], colunaDestino = destino[1];
+		int linhaOrigem = origem[0];
+		int colunaOrigem = origem[1];
+		int linhaDestino = destino[0];
+		int colunaDestino = destino[1];
 
 		if (!ValidacaoMovimento.podeMoverSimples(tabuleiro, linhaOrigem, colunaOrigem, linhaDestino, colunaDestino,
 				corJogador)) {
@@ -39,7 +41,7 @@ public class MovimentoService {
 	}
 
 	private void promoverSeNecessario(Peca peca, int linhaDestino) {
-		if (peca.isDama())
+		if (peca.ehDama())
 			return;
 		if (peca.getCor() == Cor.AZUL && linhaDestino == Tabuleiro.TAMANHO_TABULEIRO - 1) {
 			peca.setDama(true);
